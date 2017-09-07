@@ -1,4 +1,7 @@
 ## Paragraph Vectors
+[![Build Status](https://travis-ci.org/inejc/paragraph-vectors.svg?branch=master)](https://travis-ci.org/inejc/paragraph-vectors)
+[![codecov](https://codecov.io/gh/inejc/paragraph-vectors/branch/master/graph/badge.svg)](https://codecov.io/gh/inejc/paragraph-vectors)
+
 A PyTorch implementation of Paragraph Vectors (doc2vec).
 
 ### Resources

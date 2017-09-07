@@ -1,0 +1,22 @@
+language: python
+
+sudo: false
+
+python:
+  - "3.5"
+
+cache:
+    pip: true
+
+before_install:
+    - pip install -U pip wheel setuptools
+    - pip install codecov
+
+install:
+    - pip install http://download.pytorch.org/whl/cu75/torch-0.2.0.post3-cp35-cp35m-manylinux1_x86_64.whl
+
+script:
+    - coverage run setup.py test
+
+after_success:
+    - codecov
