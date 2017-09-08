@@ -4,6 +4,9 @@
 
 A PyTorch implementation of Paragraph Vectors (doc2vec).
 
+### Example usage
+todo
+
 ### Resources
 * [Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)
 * [Learning word embeddings efficiently with noise-contrastive estimation, A. Mnih et al.](http://papers.nips.cc/paper/5165-learning-word-embeddings-efficiently-with)
