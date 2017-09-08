@@ -31,6 +31,7 @@ class DistributedMemoryTest(TestCase):
 
         self.assertEqual(x.size()[0], self.batch_size)
         self.assertEqual(x.size()[1], self.num_noisy_words + 1)
+        self.assertNotEqual(torch.sum(x[0, :].data), torch.sum(x[1, :].data))
 
     def test_backward(self):
         x = self.model.forward(

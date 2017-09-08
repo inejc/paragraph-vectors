@@ -24,7 +24,8 @@ class DistributedMemory(nn.Module):
         x = torch.add(
             self._D[doc_ids, :], torch.sum(self._W[context_ids, :], dim=1))
 
-        # compute scores (unnormalized log probabilities)
+        # sparse computation of scores (unnormalized log probabilities)
+        # for negative sampling
         return torch.bmm(
             x.unsqueeze(1),
             self._O[:, target_noise_ids].permute(1, 0, 2)).squeeze()
