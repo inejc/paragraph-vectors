@@ -9,14 +9,14 @@ class DistributedMemoryTest(TestCase):
 
     def setUp(self):
         self.batch_size = 2
-        self.num_noisy_words = 2
+        self.num_noise_words = 2
         self.num_docs = 3
         self.num_words = 15
         self.vec_dim = 10
 
         self.context_ids = torch.LongTensor([[0, 2, 5, 6], [3, 4, 1, 6]])
-        self.target_noise_ids = torch.LongTensor([[1, 3, 4], [2, 4, 7]])
         self.doc_ids = torch.LongTensor([1, 2])
+        self.target_noise_ids = torch.LongTensor([[1, 3, 4], [2, 4, 7]])
         self.model = DistributedMemory(
             self.vec_dim, self.num_docs, self.num_words)
 
@@ -30,14 +30,14 @@ class DistributedMemoryTest(TestCase):
             self.context_ids, self.doc_ids, self.target_noise_ids)
 
         self.assertEqual(x.size()[0], self.batch_size)
-        self.assertEqual(x.size()[1], self.num_noisy_words + 1)
+        self.assertEqual(x.size()[1], self.num_noise_words + 1)
         self.assertNotEqual(torch.sum(x[0, :].data), torch.sum(x[1, :].data))
 
     def test_backward(self):
         x = self.model.forward(
             self.context_ids, self.doc_ids, self.target_noise_ids)
         self.model.zero_grad()
-        x.backward(torch.ones(self.batch_size, self.num_noisy_words + 1))
+        x.backward(torch.ones(self.batch_size, self.num_noise_words + 1))
 
         self.assertEqual(torch.sum(self.model._D.grad[0, :].data), 0)
         self.assertNotEqual(torch.sum(self.model._D.grad[1, :].data), 1)

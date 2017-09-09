@@ -3,14 +3,23 @@ import torch.nn as nn
 
 
 class NegativeSampling(nn.Module):
-    """Todo."""
-
+    """Negative sampling loss as proposed by T. Mikolov et al., Distributed
+    Representations of Words and Phrases and their Compositionality.
+    """
     def __init__(self):
         super(NegativeSampling, self).__init__()
         self.log_sigmoid = nn.LogSigmoid()
 
     def forward(self, scores):
-        """Todo."""
+        """Computes the value of the loss function.
+
+        Parameters
+        ----------
+        scores: autograd.Variable of size (batch_size, num_noise_words + 1)
+            Sparse unnormalized log probabilities. The first element in each
+            row is the ground truth score (i.e. the target), other elements
+            are scores of samples from the noise distribution.
+        """
         k = scores.size()[1] - 1
         return -torch.sum(
             self.log_sigmoid(scores[:, 0]) +
