@@ -9,16 +9,16 @@ A PyTorch implementation of Paragraph Vectors (doc2vec).
 * [torchtext](https://github.com/pytorch/text) (available on PyPI)
 
 ### Usage
-1. put a csv file in the [data](data) directory (*doc_id* and *text* columns are assumed)
+Put a csv file in the [data](data) directory (each row represents a single document and the first column should always contain the text).
 ```
 data/example.csv
 ----------------
-0,"In the week before their departure to Arrakis, when all the final scurrying about had reached a nearly unbearable frenzy, an old crone came to visit the mother of the boy, Paul."
-1,"It was a warm night at Castle Caladan, and the ancient pile of stone that had served the Atreides family as home for twenty-six generations bore that cooled-sweat feeling it acquired before a change in the weather."
+"In the week before their departure to Arrakis, when all the final scurrying about had reached a nearly unbearable frenzy, an old crone came to visit the mother of the boy, Paul.",...
+"It was a warm night at Castle Caladan, and the ancient pile of stone that had served the Atreides family as home for twenty-six generations bore that cooled-sweat feeling it acquired before a change in the weather.",...
 ...
 ```
 
-2. todo
+Todo.
 
 ### Resources
 * [Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)

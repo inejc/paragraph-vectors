@@ -22,6 +22,6 @@ class NegativeSampling(nn.Module):
         """
         k = scores.size()[1] - 1
         return -torch.sum(
-            self.log_sigmoid(scores[:, 0]) +
-            torch.sum(self.log_sigmoid(-scores[:, 1:]), dim=1) / k
+            self.log_sigmoid(scores[:, 0])
+            + torch.sum(self.log_sigmoid(-scores[:, 1:]), dim=1) / k
         ) / scores.size()[0]
