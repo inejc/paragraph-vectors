@@ -76,6 +76,20 @@ class NCEIteratorTest(TestCase):
         for t0, t1 in zip(targets0, targets1):
             self.assertEqual(t0, t1)
 
+    def test_tensor_sizes(self):
+        nce_generator = NCEGenerator(
+            self.dataset,
+            batch_size=32,
+            context_size=5,
+            num_noise_words=3)
+        batch = nce_generator.next()
+
+        self.assertEqual(batch.context_ids.size()[0], 32)
+        self.assertEqual(batch.context_ids.size()[1], 10)
+        self.assertEqual(batch.doc_ids.size()[0], 32)
+        self.assertEqual(batch.target_noise_ids.size()[0], 32)
+        self.assertEqual(batch.target_noise_ids.size()[1], 4)
+
 
 class DataUtilsTest(TestCase):
 

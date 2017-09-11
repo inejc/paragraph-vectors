@@ -50,11 +50,24 @@ class NCEGenerator(object):
         self.batch_size = batch_size
         self.context_size = context_size
         self.num_noise_words = num_noise_words
-        self.lock = threading.Lock()
+
+        self._vocabulary = self.dataset.fields['text'].vocab
+        self._noise = torch.Tensor(len(self._vocabulary) - 1).zero_()
+        self._init_noise_distribution()
+
         # document id and in-document position define
         # the current indexing state
-        self.doc_id = 0
-        self.in_doc_pos = self.context_size
+        self._lock = threading.Lock()
+        self._doc_id = 0
+        self._in_doc_pos = self.context_size
+
+    def _init_noise_distribution(self):
+        # we use a unigram distribution raised to the 3/4rd power,
+        # as proposed by T. Mikolov et al. in Distributed Representations
+        # of Words and Phrases and their Compositionality
+        for word, freq in self._vocabulary.freqs.items():
+            self._noise[self._word_to_index(word)] = freq
+        self._noise.pow_(0.75)
 
     def __len__(self):
         num_examples = sum(self._num_examples_in_doc(d) for d in self.dataset)
@@ -62,9 +75,9 @@ class NCEGenerator(object):
 
     def next(self):
         """Generates the next batch of examples in a thread-safe manner."""
-        with self.lock:
-            doc_id = self.doc_id
-            in_doc_pos = self.in_doc_pos
+        with self._lock:
+            doc_id = self._doc_id
+            in_doc_pos = self._in_doc_pos
             self._advance_indices()
 
         # generate the actual batch
@@ -88,35 +101,36 @@ class NCEGenerator(object):
 
     def _advance_indices(self):
         num_examples = self._num_examples_in_doc(
-            self.dataset[self.doc_id], self.in_doc_pos)
+            self.dataset[self._doc_id], self._in_doc_pos)
 
         if num_examples > self.batch_size:
             # more examples in the current document
-            self.in_doc_pos += self.batch_size
+            self._in_doc_pos += self.batch_size
             return
 
         if num_examples == self.batch_size:
             # just enough examples in the current document
-            if self.doc_id < len(self.dataset) - 1:
-                self.doc_id += 1
+            if self._doc_id < len(self.dataset) - 1:
+                self._doc_id += 1
             else:
-                self.doc_id = 0
-            self.in_doc_pos = self.context_size
+                self._doc_id = 0
+            self._in_doc_pos = self.context_size
             return
 
         while num_examples < self.batch_size:
-            if self.doc_id == len(self.dataset) - 1:
+            if self._doc_id == len(self.dataset) - 1:
                 # last document: reset indices
-                self.doc_id = 0
-                self.in_doc_pos = self.context_size
+                self._doc_id = 0
+                self._in_doc_pos = self.context_size
                 return
 
-            self.doc_id += 1
-            num_examples += self._num_examples_in_doc(self.dataset[self.doc_id])
+            self._doc_id += 1
+            num_examples += self._num_examples_in_doc(
+                self.dataset[self._doc_id])
 
-        self.in_doc_pos = (len(self.dataset[self.doc_id].text)
-                           - self.context_size
-                           - (num_examples - self.batch_size))
+        self._in_doc_pos = (len(self.dataset[self._doc_id].text)
+                            - self.context_size
+                            - (num_examples - self.batch_size))
 
     def _num_examples_in_doc(self, doc, in_doc_pos=None):
         if in_doc_pos is not None:
@@ -140,14 +154,16 @@ class NCEGenerator(object):
                 current_context.append(self._word_to_index(doc[in_doc_pos - i]))
         batch.context_ids.append(current_context)
 
-        current_target_noise = [self._word_to_index(doc[in_doc_pos])]
-        for _ in range(self.num_noise_words):
-            # todo: sample words from the noise distribution
-            pass
-        batch.target_noise_ids.append(current_target_noise)
+        # sample from the noise distribution
+        current_noise = torch.multinomial(
+            self._noise,
+            self.num_noise_words,
+            replacement=True).tolist()
+        current_noise.insert(0, self._word_to_index(doc[in_doc_pos]))
+        batch.target_noise_ids.append(current_noise)
 
     def _word_to_index(self, word):
-        return self.dataset.fields['text'].vocab.stoi[word] - 1
+        return self._vocabulary.stoi[word] - 1
 
     @staticmethod
     def _batch_to_torch_data(batch):
