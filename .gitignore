@@ -39,7 +39,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -92,5 +91,7 @@ target/
 # virtualenv
 .venv
 venv/
-ENV/
 env/
+
+# custom
+models/*.pth.tar

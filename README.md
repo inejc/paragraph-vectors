@@ -5,8 +5,10 @@
 A PyTorch implementation of Paragraph Vectors (doc2vec).
 
 ### Requirements
-* [PyTorch](http://pytorch.org)
-* [torchtext](https://github.com/pytorch/text) (available on PyPI)
+Install [PyTorch](http://pytorch.org) (follow the link for instructions) and packages from *requirements.txt*.
+```
+pip install -r requirements.txt
+```
 
 ### Usage
 Put a csv file in the [data](data) directory (each row represents a single document and the first column should always contain the text).
@@ -17,8 +19,11 @@ data/example.csv
 "It was a warm night at Castle Caladan, and the ancient pile of stone that had served the Atreides family as home for twenty-six generations bore that cooled-sweat feeling it acquired before a change in the weather.",...
 ...
 ```
-
-Todo.
+Run [train.py](paragraphvec/train.py) with selected hyperparameters.
+```
+python train.py start --data_file_name 'example.csv' --num_epochs 500 --batch_size 32 --context_size 8 --num_noise_words 50 --vec_dim 300 --lr 1e-4
+```
+The latest checkpoint and the best performing model are saved in the [models](models) directory.
 
 ### Resources
 * [Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)

@@ -20,13 +20,13 @@ class DistributedMemory(nn.Module):
         super(DistributedMemory, self).__init__()
         # paragraph matrix
         self._D = nn.Parameter(
-            torch.rand(num_docs, vec_dim), requires_grad=True)
+            torch.randn(num_docs, vec_dim), requires_grad=True)
         # word matrix
         self._W = nn.Parameter(
-            torch.rand(num_words, vec_dim), requires_grad=True)
+            torch.randn(num_words, vec_dim), requires_grad=True)
         # output layer parameters
         self._O = nn.Parameter(
-            torch.rand(vec_dim, num_words), requires_grad=True)
+            torch.FloatTensor(vec_dim, num_words).zero_(), requires_grad=True)
 
     def forward(self, context_ids, doc_ids, target_noise_ids):
         """Sparse computation of scores (unnormalized log probabilities)
@@ -59,12 +59,3 @@ class DistributedMemory(nn.Module):
         return torch.bmm(
             x.unsqueeze(1),
             self._O[:, target_noise_ids].permute(1, 0, 2)).squeeze()
-
-
-class DistributedBagOfWords(nn.Module):
-    """Distributed Bag of Words version of Paragraph Vectors."""
-    def __init__(self):
-        super(DistributedBagOfWords, self).__init__()
-
-    def forward(self):
-        raise NotImplementedError()

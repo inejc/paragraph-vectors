@@ -2,7 +2,8 @@ from unittest import TestCase
 
 import torch
 
-from paragraphvec.models import DistributedMemory, DistributedBagOfWords
+from paragraphvec.loss import NegativeSampling
+from paragraphvec.models import DistributedMemory
 
 
 class DistributedMemoryTest(TestCase):
@@ -31,13 +32,17 @@ class DistributedMemoryTest(TestCase):
 
         self.assertEqual(x.size()[0], self.batch_size)
         self.assertEqual(x.size()[1], self.num_noise_words + 1)
-        self.assertNotEqual(torch.sum(x[0, :].data), torch.sum(x[1, :].data))
 
     def test_backward(self):
-        x = self.model.forward(
-            self.context_ids, self.doc_ids, self.target_noise_ids)
-        self.model.zero_grad()
-        x.backward(torch.ones(self.batch_size, self.num_noise_words + 1))
+        cost_func = NegativeSampling()
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001)
+        for _ in range(2):
+            x = self.model.forward(
+                self.context_ids, self.doc_ids, self.target_noise_ids)
+            x = cost_func.forward(x)
+            self.model.zero_grad()
+            x.backward()
+            optimizer.step()
 
         self.assertEqual(torch.sum(self.model._D.grad[0, :].data), 0)
         self.assertNotEqual(torch.sum(self.model._D.grad[1, :].data), 1)
@@ -60,13 +65,3 @@ class DistributedMemoryTest(TestCase):
             else:
                 self.assertEqual(
                     torch.sum(self.model._O.grad[:, word_id].data), 0)
-
-
-class DistributedBagOfWordsTest(TestCase):
-
-    def setUp(self):
-        self.model = DistributedBagOfWords()
-
-    def test_forward(self):
-        with self.assertRaises(NotImplementedError):
-            self.model.forward()

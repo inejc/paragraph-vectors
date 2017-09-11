@@ -1,5 +1,6 @@
 certifi==2017.7.27.1
 chardet==3.0.4
+fire==0.1.2
 idna==2.6
 numpy==1.13.1
 PyYAML==3.12

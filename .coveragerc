@@ -5,7 +5,8 @@ source =
     paragraphvec
 
 omit =
-    paragraph-vectors/tests/*
+    *tests*
+    *train.py
 
 [report]
 exclude_lines =
