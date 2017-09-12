@@ -10,7 +10,6 @@ class NCEIteratorTest(TestCase):
 
     def test_num_examples_for_different_batch_sizes(self):
         len_1 = self._num_examples_with_batch_size(1)
-        self.assertEqual(len_1, 140)
 
         for batch_size in range(2, 33):
             len_x = self._num_examples_with_batch_size(batch_size)

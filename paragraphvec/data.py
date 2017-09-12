@@ -1,3 +1,4 @@
+import re
 import threading
 from math import ceil
 from os.path import join, dirname
@@ -13,7 +14,7 @@ def load_dataset(file_name):
     torchtext.data.TabularDataset instance.
     """
     file_path = join(_DATA_DIR, file_name)
-    text_field = Field(pad_token=None)
+    text_field = Field(pad_token=None, tokenize=_tokenize_str)
 
     dataset = TabularDataset(
         path=file_path,
@@ -22,6 +23,29 @@ def load_dataset(file_name):
 
     text_field.build_vocab(dataset)
     return dataset
+
+
+def _tokenize_str(str_):
+    # keep only alphanumeric and punctations
+    str_ = re.sub(r'[^A-Za-z0-9(),.!?\'`]', ' ', str_)
+    # remove multiple whitespace characters
+    str_ = re.sub(r'\s{2,}', ' ', str_)
+    # split contractions into multiple tokens
+    str_ = re.sub(r'\'s', ' \'s', str_)
+    str_ = re.sub(r'\'ve', ' \'ve', str_)
+    str_ = re.sub(r'n\'t', ' n\'t', str_)
+    str_ = re.sub(r'\'re', ' \'re', str_)
+    str_ = re.sub(r'\'d', ' \'d', str_)
+    str_ = re.sub(r'\'ll', ' \'ll', str_)
+    # punctations to tokens
+    str_ = re.sub(r',', ' , ', str_)
+    str_ = re.sub(r'\.', ' . ', str_)
+    str_ = re.sub(r'!', ' ! ', str_)
+    str_ = re.sub(r'\(', ' ( ', str_)
+    str_ = re.sub(r'\)', ' ) ', str_)
+    str_ = re.sub(r'\?', ' ? ', str_)
+    # lower case
+    return str_.strip().lower().split()
 
 
 class NCEGenerator(object):
