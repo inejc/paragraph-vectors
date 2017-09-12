@@ -199,9 +199,9 @@ class NCEGenerator(object):
         batch.target_noise_ids = torch.LongTensor(batch.target_noise_ids)
 
         if torch.cuda.is_available():
-            batch.context_ids.cuda()
-            batch.doc_ids.cuda()
-            batch.target_noise_ids.cuda()
+            batch.context_ids = batch.context_ids.cuda()
+            batch.doc_ids = batch.doc_ids.cuda()
+            batch.target_noise_ids = batch.target_noise_ids.cuda()
 
         return batch
 

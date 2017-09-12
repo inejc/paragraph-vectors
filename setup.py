@@ -5,6 +5,9 @@ description = 'A PyTorch implementation of Paragraph Vectors (doc2vec).'
 with open('README.md') as f:
     long_description = f.read()
 
+with open('requirements.txt') as f:
+    requires = f.read().splitlines()
+
 setup(
     name='paragraph-vectors',
     version='0.0.1',
@@ -13,7 +16,7 @@ setup(
     long_description=long_description,
     license='MIT',
     keywords='nlp documents embedding machine-learning',
-    install_requires=['torch'],
+    install_requires=requires,
     packages=find_packages(),
     test_suite='tests',
     classifiers=[
