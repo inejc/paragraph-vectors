@@ -1,5 +1,5 @@
+import multiprocessing
 import re
-import threading
 from math import ceil
 from os.path import join, dirname
 
@@ -49,8 +49,8 @@ def _tokenize_str(str_):
 
 
 class NCEGenerator(object):
-    """An infinite, thread-safe batch generator for noise-contrastive
-    estimation of word vector models.
+    """An infinite, parallel (multiprocess) batch generator for
+    noise-contrastive estimation of word vector models.
 
     Parameters
     ----------
@@ -68,8 +68,44 @@ class NCEGenerator(object):
 
     num_noise_words: int
         Number of noise words to sample from the noise distribution.
+
+    max_size: int, default=5
+        Maximum number of pre-generated batches.
+
+    num_workers: int, default=1
+        Number of jobs to run in parallel. If value is set to -1 number
+        of machine cores are used.
     """
-    def __init__(self, dataset, batch_size, context_size, num_noise_words):
+    def __init__(self, dataset, batch_size, context_size,
+                 num_noise_words, max_size=5, num_workers=1):
+        self._generator = _NCEGenerator(
+            dataset,
+            batch_size,
+            context_size,
+            num_noise_words,
+            _NCEGeneratorState(context_size))
+
+    def __len__(self):
+        return len(self._generator)
+
+    def next(self):
+        # todo: run in parallel
+        return self._generator.next()
+
+
+class _NCEGenerator(object):
+    """An infinite, process-safe batch generator for noise-contrastive
+    estimation of word vector models.
+
+    Parameters
+    ----------
+    state: paragraphvec.data._NCEGeneratorState
+        Initial (indexing) state of the generator.
+
+    For other parameters see the class NCEBatchPool.
+    """
+    def __init__(self, dataset, batch_size, context_size,
+                 num_noise_words, state):
         self.dataset = dataset
         self.batch_size = batch_size
         self.context_size = context_size
@@ -78,12 +114,7 @@ class NCEGenerator(object):
         self._vocabulary = self.dataset.fields['text'].vocab
         self._noise = torch.Tensor(len(self._vocabulary) - 1).zero_()
         self._init_noise_distribution()
-
-        # document id and in-document position define
-        # the current indexing state
-        self._lock = threading.Lock()
-        self._doc_id = 0
-        self._in_doc_pos = self.context_size
+        self._state = state
 
     def _init_noise_distribution(self):
         # we use a unigram distribution raised to the 3/4rd power,
@@ -101,63 +132,33 @@ class NCEGenerator(object):
         return len(self._vocabulary) - 1
 
     def next(self):
-        """Generates the next batch of examples in a thread-safe manner."""
-        with self._lock:
-            doc_id = self._doc_id
-            in_doc_pos = self._in_doc_pos
-            self._advance_indices()
+        """Updates state for the next process in a thread-safe manner
+        and generates the current batch"""
+        # call to advance_state() is process-safe
+        prev_doc_id, prev_in_doc_pos = self._state.update_state(
+            self.dataset,
+            self.batch_size,
+            self.context_size,
+            self._num_examples_in_doc)
 
         # generate the actual batch
-        batch = NCEBatch()
+        batch = _NCEBatch()
 
         while len(batch) < self.batch_size:
-            if doc_id == len(self.dataset):
+            if prev_doc_id == len(self.dataset):
                 # last document exhausted
                 return self._batch_to_torch_data(batch)
-            if in_doc_pos <= (len(self.dataset[doc_id].text) - 1
-                              - self.context_size):
+            if prev_in_doc_pos <= (len(self.dataset[prev_doc_id].text) - 1
+                                   - self.context_size):
                 # more examples in the current document
-                self._add_example_to_batch(doc_id, in_doc_pos, batch)
-                in_doc_pos += 1
+                self._add_example_to_batch(prev_doc_id, prev_in_doc_pos, batch)
+                prev_in_doc_pos += 1
             else:
                 # go to the next document
-                doc_id += 1
-                in_doc_pos = self.context_size
+                prev_doc_id += 1
+                prev_in_doc_pos = self.context_size
 
         return self._batch_to_torch_data(batch)
-
-    def _advance_indices(self):
-        num_examples = self._num_examples_in_doc(
-            self.dataset[self._doc_id], self._in_doc_pos)
-
-        if num_examples > self.batch_size:
-            # more examples in the current document
-            self._in_doc_pos += self.batch_size
-            return
-
-        if num_examples == self.batch_size:
-            # just enough examples in the current document
-            if self._doc_id < len(self.dataset) - 1:
-                self._doc_id += 1
-            else:
-                self._doc_id = 0
-            self._in_doc_pos = self.context_size
-            return
-
-        while num_examples < self.batch_size:
-            if self._doc_id == len(self.dataset) - 1:
-                # last document: reset indices
-                self._doc_id = 0
-                self._in_doc_pos = self.context_size
-                return
-
-            self._doc_id += 1
-            num_examples += self._num_examples_in_doc(
-                self.dataset[self._doc_id])
-
-        self._in_doc_pos = (len(self.dataset[self._doc_id].text)
-                            - self.context_size
-                            - (num_examples - self.batch_size))
 
     def _num_examples_in_doc(self, doc, in_doc_pos=None):
         if in_doc_pos is not None:
@@ -206,7 +207,63 @@ class NCEGenerator(object):
         return batch
 
 
-class NCEBatch(object):
+class _NCEGeneratorState(object):
+    """Batch generator state that is represented with a document id and
+    in-document position. It abstracts a process-safe indexing mechanism."""
+    def __init__(self, context_size):
+        # use raw values because both indices have
+        # to manually be locked together
+        self._doc_id = multiprocessing.RawValue('i', 0)
+        self._in_doc_pos = multiprocessing.RawValue('i', context_size)
+        self._lock = multiprocessing.Lock()
+
+    def update_state(self, dataset, batch_size,
+                     context_size, num_examples_in_doc):
+        """Returns current indices and computes new indices for the
+        next process."""
+        with self._lock:
+            doc_id = self._doc_id.value
+            in_doc_pos = self._in_doc_pos.value
+            self._advance_indices(
+                dataset, batch_size, context_size, num_examples_in_doc)
+            return doc_id, in_doc_pos
+
+    def _advance_indices(self, dataset, batch_size,
+                         context_size, num_examples_in_doc):
+        num_examples = num_examples_in_doc(
+            dataset[self._doc_id.value], self._in_doc_pos.value)
+
+        if num_examples > batch_size:
+            # more examples in the current document
+            self._in_doc_pos.value += batch_size
+            return
+
+        if num_examples == batch_size:
+            # just enough examples in the current document
+            if self._doc_id.value < len(dataset) - 1:
+                self._doc_id.value += 1
+            else:
+                self._doc_id.value = 0
+            self._in_doc_pos.value = context_size
+            return
+
+        while num_examples < batch_size:
+            if self._doc_id.value == len(dataset) - 1:
+                # last document: reset indices
+                self._doc_id.value = 0
+                self._in_doc_pos.value = context_size
+                return
+
+            self._doc_id.value += 1
+            num_examples += num_examples_in_doc(
+                dataset[self._doc_id.value])
+
+        self._in_doc_pos.value = (len(dataset[self._doc_id.value].text)
+                                  - context_size
+                                  - (num_examples - batch_size))
+
+
+class _NCEBatch(object):
     def __init__(self):
         self.context_ids = []
         self.doc_ids = []
