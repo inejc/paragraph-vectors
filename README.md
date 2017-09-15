@@ -6,7 +6,7 @@ A PyTorch implementation of Paragraph Vectors (doc2vec).
 
 ### Installation
 1. Install [PyTorch](http://pytorch.org) (follow the link for instructions).
-2. Install the paragraph-vectors library.
+2. Install the `paragraph-vectors` library.
 ```
 git clone https://github.com/inejc/paragraph-vectors.git
 cd paragraph-vectors
@@ -50,6 +50,13 @@ Version of the model as proposed by Q. V. Le et al., Distributed Representations
 Method for combining paragraph and word vectors in the 'dm' model. Currently only the 'sum' operation is implemented.
 10. **save_all**: bool, default=False\
 Indicates whether a checkpoint is saved after each epoch. If false, only the best performing model is saved.
+11. **max_generated_batches**: int, default=5\
+Maximum number of pre-generated batches.
+12. **num_workers**: int, default=1\
+Number of batch generator jobs to run in parallel. If value is set to -1, total number of machine CPUs is used. Note that order of batches is currently not guaranteed when **num_workers** > 1.
+
+##### Caveat Emptor
+Be warned that `paragraph-vectors` is in an early-stage development phase. Feedback, comments, suggestions, contributions, etc. are more than welcome.
 
 ### Benchmarks
 Todo (see https://github.com/inejc/paragraph-vectors/issues/4).

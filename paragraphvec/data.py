@@ -1,6 +1,7 @@
 import multiprocessing
 import re
 from math import ceil
+from os import cpu_count
 from os.path import join, dirname
 
 import torch
@@ -30,6 +31,13 @@ def _tokenize_str(str_):
     str_ = re.sub(r'[^A-Za-z0-9(),.!?\'`]', ' ', str_)
     # remove multiple whitespace characters
     str_ = re.sub(r'\s{2,}', ' ', str_)
+    # punctations to tokens
+    str_ = re.sub(r'\(', ' ( ', str_)
+    str_ = re.sub(r'\)', ' ) ', str_)
+    str_ = re.sub(r',', ' , ', str_)
+    str_ = re.sub(r'\.', ' . ', str_)
+    str_ = re.sub(r'!', ' ! ', str_)
+    str_ = re.sub(r'\?', ' ? ', str_)
     # split contractions into multiple tokens
     str_ = re.sub(r'\'s', ' \'s', str_)
     str_ = re.sub(r'\'ve', ' \'ve', str_)
@@ -37,18 +45,11 @@ def _tokenize_str(str_):
     str_ = re.sub(r'\'re', ' \'re', str_)
     str_ = re.sub(r'\'d', ' \'d', str_)
     str_ = re.sub(r'\'ll', ' \'ll', str_)
-    # punctations to tokens
-    str_ = re.sub(r',', ' , ', str_)
-    str_ = re.sub(r'\.', ' . ', str_)
-    str_ = re.sub(r'!', ' ! ', str_)
-    str_ = re.sub(r'\(', ' ( ', str_)
-    str_ = re.sub(r'\)', ' ) ', str_)
-    str_ = re.sub(r'\?', ' ? ', str_)
     # lower case
     return str_.strip().lower().split()
 
 
-class NCEGenerator(object):
+class NCEData(object):
     """An infinite, parallel (multiprocess) batch generator for
     noise-contrastive estimation of word vector models.
 
@@ -69,15 +70,22 @@ class NCEGenerator(object):
     num_noise_words: int
         Number of noise words to sample from the noise distribution.
 
-    max_size: int, default=5
+    max_size: int
         Maximum number of pre-generated batches.
 
-    num_workers: int, default=1
-        Number of jobs to run in parallel. If value is set to -1 number
-        of machine cores are used.
+    num_workers: int
+        Number of jobs to run in parallel. If value is set to -1, total number
+        of machine CPUs is used.
     """
+    # code inspired by parallel generators in https://github.com/fchollet/keras
     def __init__(self, dataset, batch_size, context_size,
-                 num_noise_words, max_size=5, num_workers=1):
+                 num_noise_words, max_size, num_workers):
+        self.max_size = max_size
+
+        self.num_workers = num_workers if num_workers != -1 else cpu_count()
+        if self.num_workers is None:
+            self.num_workers = 1
+
         self._generator = _NCEGenerator(
             dataset,
             batch_size,
@@ -85,12 +93,59 @@ class NCEGenerator(object):
             num_noise_words,
             _NCEGeneratorState(context_size))
 
+        self._queue = None
+        self._stop_event = None
+        self._processes = []
+
     def __len__(self):
         return len(self._generator)
 
-    def next(self):
-        # todo: run in parallel
-        return self._generator.next()
+    def vocabulary_size(self):
+        return self._generator.vocabulary_size()
+
+    def start(self):
+        """Starts num_worker processes that generate batches of data."""
+        self._queue = multiprocessing.Queue(maxsize=self.max_size)
+        self._stop_event = multiprocessing.Event()
+
+        for _ in range(self.num_workers):
+            process = multiprocessing.Process(target=self._parallel_task)
+            process.daemon = True
+            self._processes.append(process)
+            process.start()
+
+    def _parallel_task(self):
+        while not self._stop_event.is_set():
+            try:
+                batch = self._generator.next()
+                # queue blocks a call to put() until a free slot is available
+                self._queue.put(batch)
+            except KeyboardInterrupt:
+                self._stop_event.set()
+
+    def get_generator(self):
+        """Returns a generator that yields batches of data."""
+        while self._is_running():
+            yield self._queue.get()
+
+    def stop(self):
+        """Terminates all processes that were created with start()."""
+        if self._is_running():
+            self._stop_event.set()
+
+        for process in self._processes:
+            if process.is_alive():
+                process.terminate()
+
+        if self._queue is not None:
+            self._queue.close()
+
+        self._queue = None
+        self._stop_event = None
+        self._processes = []
+
+    def _is_running(self):
+        return self._stop_event is not None and not self._stop_event.is_set()
 
 
 class _NCEGenerator(object):
@@ -132,9 +187,8 @@ class _NCEGenerator(object):
         return len(self._vocabulary) - 1
 
     def next(self):
-        """Updates state for the next process in a thread-safe manner
+        """Updates state for the next process in a process-safe manner
         and generates the current batch"""
-        # call to advance_state() is process-safe
         prev_doc_id, prev_in_doc_pos = self._state.update_state(
             self.dataset,
             self.batch_size,
