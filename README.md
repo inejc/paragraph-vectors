@@ -4,6 +4,8 @@
 
 A PyTorch implementation of Paragraph Vectors (doc2vec).
 
+All models minimize the Negative Sampling objective as proposed by T. Mikolov et al. [1]. This allows that only vectors of the words sampled from the noise distribution are used in the forward and backward pass (i.e. sparse updates). In addition to that, batches of training data (with noise sampling) are generated in parallel on a CPU, while the model is trained on a GPU.
+
 ### Installation
 1. Install [PyTorch](http://pytorch.org) (follow the link for instructions).
 2. Install the `paragraph-vectors` library.
@@ -45,7 +47,7 @@ Number of examples per single gradient update.
 7. **lr**: float\
 Learning rate of the SGD optimizer (uses 0.9 nesterov momentum).
 8. **model_ver**: str, one of ('dm', 'dbow'), default='dm'\
-Version of the model as proposed by Q. V. Le et al., Distributed Representations of Sentences and Documents. 'dm' stands for Distributed Memory, 'dbow' stands for Distributed Bag Of Words. Currently only the 'dm' version is implemented.
+Version of the model as proposed by Q. V. Le et al. [5], Distributed Representations of Sentences and Documents. 'dm' stands for Distributed Memory, 'dbow' stands for Distributed Bag Of Words. Currently only the 'dm' version is implemented.
 9. **vec_combine_method**: str, one of ('sum', 'concat'), default='sum'\
 Method for combining paragraph and word vectors in the 'dm' model. Currently only the 'sum' operation is implemented.
 10. **save_all**: bool, default=False\
@@ -55,8 +57,7 @@ Maximum number of pre-generated batches.
 12. **num_workers**: int, default=1\
 Number of batch generator jobs to run in parallel. If value is set to -1, total number of machine CPUs is used. Note that order of batches is currently not guaranteed when **num_workers** > 1.
 
-##### Caveat Emptor
-Be warned that `paragraph-vectors` is in an early-stage development phase. Feedback, comments, suggestions, contributions, etc. are more than welcome.
+**Caveat emptor!** Be warned that `paragraph-vectors` is in an early-stage development phase. Feedback, comments, suggestions, contributions, etc. are more than welcome.
 
 ### Benchmarks
 Todo (see https://github.com/inejc/paragraph-vectors/issues/4).
@@ -65,9 +66,9 @@ Todo (see https://github.com/inejc/paragraph-vectors/issues/4).
 Todo.
 
 ### Resources
-* [Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)
-* [Learning word embeddings efficiently with noise-contrastive estimation, A. Mnih et al.](http://papers.nips.cc/paper/5165-learning-word-embeddings-efficiently-with)
-* [Notes on Noise Contrastive Estimation and Negative Sampling, C. Dyer](https://arxiv.org/abs/1410.8251)
-* [Approximating the Softmax (a blog post), S. Ruder](http://ruder.io/word-embeddings-softmax/index.html)
-* [Distributed Representations of Sentences and Documents, Q. V. Le et al.](https://arxiv.org/abs/1405.4053)
-* [Document Embedding with Paragraph Vectors, A. M. Dai et al.](https://arxiv.org/abs/1507.07998)
+* [1][Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)
+* [2][Learning word embeddings efficiently with noise-contrastive estimation, A. Mnih et al.](http://papers.nips.cc/paper/5165-learning-word-embeddings-efficiently-with)
+* [3][Notes on Noise Contrastive Estimation and Negative Sampling, C. Dyer](https://arxiv.org/abs/1410.8251)
+* [4][Approximating the Softmax (a blog post), S. Ruder](http://ruder.io/word-embeddings-softmax/index.html)
+* [5][Distributed Representations of Sentences and Documents, Q. V. Le et al.](https://arxiv.org/abs/1405.4053)
+* [6][Document Embedding with Paragraph Vectors, A. M. Dai et al.](https://arxiv.org/abs/1507.07998)

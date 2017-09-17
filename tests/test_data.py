@@ -120,6 +120,59 @@ class NCEDataTest(TestCase):
         self.assertEqual(batch.target_noise_ids.size()[0], 32)
         self.assertEqual(batch.target_noise_ids.size()[1], 4)
 
+    def test_parallel(self):
+        nce_data = NCEData(
+            self.dataset,
+            batch_size=32,
+            context_size=5,
+            num_noise_words=1,
+            max_size=1,
+            num_workers=2)
+        nce_data.start()
+        nce_generator = nce_data.get_generator()
+        batch00 = next(nce_generator)
+        batch01 = next(nce_generator)
+        batch02 = next(nce_generator)
+        nce_data.stop()
+
+        nce_data = NCEData(
+            self.dataset,
+            batch_size=32,
+            context_size=5,
+            num_noise_words=1,
+            max_size=1,
+            num_workers=2)
+        nce_data.start()
+        nce_generator = nce_data.get_generator()
+        batch10 = next(nce_generator)
+        batch11 = next(nce_generator)
+        batch12 = next(nce_generator)
+        nce_data.stop()
+
+        batch0_same = any([
+            self.batches_same(batch00, batch10),
+            self.batches_same(batch00, batch11),
+            self.batches_same(batch00, batch12)
+        ])
+        batch1_same = any([
+            self.batches_same(batch01, batch10),
+            self.batches_same(batch01, batch11),
+            self.batches_same(batch01, batch12)
+        ])
+        batch2_same = any([
+            self.batches_same(batch02, batch10),
+            self.batches_same(batch02, batch11),
+            self.batches_same(batch02, batch12)
+        ])
+        self.assertTrue(batch0_same and batch1_same and batch2_same)
+
+    @staticmethod
+    def batches_same(batch0, batch1):
+        for t0, t1 in zip(batch0.target_noise_ids, batch1.target_noise_ids):
+            if t0[0] != t1[0]:
+                return False
+        return True
+
 
 class DataUtilsTest(TestCase):
 
