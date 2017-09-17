@@ -1,7 +1,8 @@
 [run]
 branch = True
 
-concurrency=multiprocessing
+concurrency = multiprocessing
+parallel = True
 
 source =
     paragraphvec
@@ -9,6 +10,7 @@ source =
 omit =
     *tests*
     *train.py
+    *data.py
 
 [report]
 exclude_lines =

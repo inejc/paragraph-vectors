@@ -4,7 +4,7 @@
 
 A PyTorch implementation of Paragraph Vectors (doc2vec).
 
-All models minimize the Negative Sampling objective as proposed by T. Mikolov et al. [1]. This allows that only vectors of the words sampled from the noise distribution are used in the forward and backward pass (i.e. sparse updates). In addition to that, batches of training data (with noise sampling) are generated in parallel on a CPU, while the model is trained on a GPU.
+All models minimize the Negative Sampling objective as proposed by T. Mikolov et al. [1]. This provides scope for sparse updates (i.e. only vectors of sampled noise words are used in forward and backward passes). In addition to that, batches of training data (with noise sampling) are generated in parallel on CPU while the model is trained on GPU.
 
 ### Installation
 1. Install [PyTorch](http://pytorch.org) (follow the link for instructions).
@@ -66,9 +66,9 @@ Todo (see https://github.com/inejc/paragraph-vectors/issues/4).
 Todo.
 
 ### Resources
-* [1][Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)
-* [2][Learning word embeddings efficiently with noise-contrastive estimation, A. Mnih et al.](http://papers.nips.cc/paper/5165-learning-word-embeddings-efficiently-with)
-* [3][Notes on Noise Contrastive Estimation and Negative Sampling, C. Dyer](https://arxiv.org/abs/1410.8251)
-* [4][Approximating the Softmax (a blog post), S. Ruder](http://ruder.io/word-embeddings-softmax/index.html)
-* [5][Distributed Representations of Sentences and Documents, Q. V. Le et al.](https://arxiv.org/abs/1405.4053)
-* [6][Document Embedding with Paragraph Vectors, A. M. Dai et al.](https://arxiv.org/abs/1507.07998)
+* [1] [Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)
+* [2] [Learning word embeddings efficiently with noise-contrastive estimation, A. Mnih et al.](http://papers.nips.cc/paper/5165-learning-word-embeddings-efficiently-with)
+* [3] [Notes on Noise Contrastive Estimation and Negative Sampling, C. Dyer](https://arxiv.org/abs/1410.8251)
+* [4] [Approximating the Softmax (a blog post), S. Ruder](http://ruder.io/word-embeddings-softmax/index.html)
+* [5] [Distributed Representations of Sentences and Documents, Q. V. Le et al.](https://arxiv.org/abs/1405.4053)
+* [6] [Document Embedding with Paragraph Vectors, A. M. Dai et al.](https://arxiv.org/abs/1507.07998)
