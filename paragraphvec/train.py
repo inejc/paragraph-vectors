@@ -7,7 +7,7 @@ import fire
 import torch
 from torch.optim import SGD
 
-from paragraphvec.data import load_dataset, NCEGenerator
+from paragraphvec.data import load_dataset, NCEData
 from paragraphvec.loss import NegativeSampling
 from paragraphvec.models import DistributedMemory
 
@@ -26,7 +26,9 @@ def start(data_file_name,
           lr,
           model_ver='dm',
           vec_combine_method='sum',
-          save_all=False):
+          save_all=False,
+          max_generated_batches=5,
+          num_workers=1):
     """Trains a new model. The latest checkpoint and the best performing
     model are saved in the *models* directory.
 
@@ -68,22 +70,55 @@ def start(data_file_name,
     save_all: bool, default=False
         Indicates whether a checkpoint is saved after each epoch.
         If false, only the best performing model is saved.
+
+    max_generated_batches: int, default=5
+        Maximum number of pre-generated batches.
+
+    num_workers: int, default=1
+        Number of batch generator jobs to run in parallel. If value is set
+        to -1 number of machine cores are used.
     """
     assert model_ver in ('dm', 'dbow')
     assert vec_combine_method in ('sum', 'concat')
 
     dataset = load_dataset(data_file_name)
-    data_generator = NCEGenerator(
+    nce_data = NCEData(
         dataset,
         batch_size,
         context_size,
-        num_noise_words)
-    num_batches = len(data_generator)
+        num_noise_words,
+        max_generated_batches,
+        num_workers)
+    nce_data.start()
+
+    try:
+        _run(data_file_name, dataset, nce_data.get_generator(), len(nce_data),
+             nce_data.vocabulary_size(), context_size, num_noise_words, vec_dim,
+             num_epochs, batch_size, lr, model_ver, vec_combine_method,
+             save_all)
+    except KeyboardInterrupt:
+        nce_data.stop()
+
+
+def _run(data_file_name,
+         dataset,
+         data_generator,
+         num_batches,
+         vocabulary_size,
+         context_size,
+         num_noise_words,
+         vec_dim,
+         num_epochs,
+         batch_size,
+         lr,
+         model_ver,
+         vec_combine_method,
+         save_all):
 
     model = DistributedMemory(
         vec_dim,
         num_docs=len(dataset),
-        num_words=data_generator.vocabulary_size())
+        num_words=vocabulary_size)
 
     cost_func = NegativeSampling()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, nesterov=True)
@@ -92,7 +127,7 @@ def start(data_file_name,
         model.cuda()
 
     print("Dataset comprised of {:d} documents.".format(len(dataset)))
-    print("Vocabulary size is {:d}.\n".format(data_generator.vocabulary_size()))
+    print("Vocabulary size is {:d}.\n".format(vocabulary_size))
     print("Training started.")
 
     best_loss = float_info.max
@@ -103,7 +138,7 @@ def start(data_file_name,
         loss = []
 
         for batch_i in range(num_batches):
-            batch = data_generator.next()
+            batch = next(data_generator)
             x = model.forward(
                 batch.context_ids,
                 batch.doc_ids,

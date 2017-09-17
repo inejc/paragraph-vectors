@@ -1,6 +1,8 @@
 [run]
 branch = True
 
+concurrency=multiprocessing
+
 source =
     paragraphvec
 

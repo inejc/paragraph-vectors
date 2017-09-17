@@ -17,7 +17,8 @@ install:
     - pip install -r requirements.txt
 
 script:
-    - coverage run setup.py test
+    - coverage run --parallel-mode setup.py test
+    - coverage combine
 
 after_success:
     - codecov
