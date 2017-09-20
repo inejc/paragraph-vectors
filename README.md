@@ -6,9 +6,11 @@ A PyTorch implementation of Paragraph Vectors (doc2vec).
 
 All models minimize the Negative Sampling objective as proposed by T. Mikolov et al. [1]. This provides scope for sparse updates (i.e. only vectors of sampled noise words are used in forward and backward passes). In addition to that, batches of training data (with noise sampling) are generated in parallel on CPU while the model is trained on GPU.
 
+**Caveat emptor!** Be warned that **`paragraph-vectors`** is in an early-stage development phase. Feedback, comments, suggestions, contributions, etc. are more than welcome.
+
 ### Installation
 1. Install [PyTorch](http://pytorch.org) (follow the link for instructions).
-2. Install the `paragraph-vectors` library.
+2. Install the **`paragraph-vectors`** library.
 ```
 git clone https://github.com/inejc/paragraph-vectors.git
 cd paragraph-vectors
@@ -25,45 +27,53 @@ data/example.csv
 "It was a warm night at Castle Caladan, and the ancient pile of stone that had served the Atreides family as home for twenty-six generations bore that cooled-sweat feeling it acquired before a change in the weather.",...
 ...
 ```
-2. Run [train.py](paragraphvec/train.py) with selected parameters.
+2. Run [train.py](paragraphvec/train.py) with selected parameters (models are saved in the [models](models) directory).
 ```bash
 python train.py start --data_file_name 'example.csv' --num_epochs 100 --batch_size 32 --context_size 4 --num_noise_words 5 --vec_dim 150 --lr 1e-4
 ```
-Models are saved in the [models](models) directory.
 
 #### Parameters
-1. **data_file_name**: str\
+* **`data_file_name`**: str\
 Name of a file in the *data* directory.
-2. **context_size**: int\
+* **`context_size`**: int\
 Half the size of a neighbourhood of target words (i.e. how many words left and right are regarded as context).
-3. **num_noise_words**: int\
+* **`num_noise_words`**: int\
 Number of noise words to sample from the noise distribution.
-4. **vec_dim**: int\
+* **`vec_dim`**: int\
 Dimensionality of vectors to be learned (for paragraphs and words).
-5. **num_epochs**: int\
+* **`num_epochs`**: int\
 Number of iterations to train the model (i.e. number of times every example is seen during training).
-6. **batch_size**: int\
+* **`batch_size`**: int\
 Number of examples per single gradient update.
-7. **lr**: float\
+* **`lr`**: float\
 Learning rate of the SGD optimizer (uses 0.9 nesterov momentum).
-8. **model_ver**: str, one of ('dm', 'dbow'), default='dm'\
+* **`model_ver`**: str, one of ('dm', 'dbow'), default='dm'\
 Version of the model as proposed by Q. V. Le et al. [5], Distributed Representations of Sentences and Documents. 'dm' stands for Distributed Memory, 'dbow' stands for Distributed Bag Of Words. Currently only the 'dm' version is implemented.
-9. **vec_combine_method**: str, one of ('sum', 'concat'), default='sum'\
+* **`vec_combine_method`**: str, one of ('sum', 'concat'), default='sum'\
 Method for combining paragraph and word vectors in the 'dm' model. Currently only the 'sum' operation is implemented.
-10. **save_all**: bool, default=False\
+* **`save_all`**: bool, default=False\
 Indicates whether a checkpoint is saved after each epoch. If false, only the best performing model is saved.
-11. **max_generated_batches**: int, default=5\
+* **`max_generated_batches`**: int, default=5\
 Maximum number of pre-generated batches.
-12. **num_workers**: int, default=1\
-Number of batch generator jobs to run in parallel. If value is set to -1, total number of machine CPUs is used. Note that order of batches is currently not guaranteed when **num_workers** > 1.
+* **`num_workers`**: int, default=1\
+Number of batch generator jobs to run in parallel. If value is set to -1, total number of machine CPUs is used. Note that order of batches is currently not guaranteed when **`num_workers`** > 1.
 
-**Caveat emptor!** Be warned that `paragraph-vectors` is in an early-stage development phase. Feedback, comments, suggestions, contributions, etc. are more than welcome.
+3. Export trained paragraph vectors to a csv file (vectors are saved in the [data](data) directory).
+```bash
+python export_vectors.py start --data_file_name 'example.csv' --model_file_name 'example_model.dm.sum_contextsize.5_numnoisewords.50_vecdim.300_batchsize.32_lr.0.010000_epoch.791_loss.0.057607.pth.tar'
+```
 
-### Benchmarks
-Todo (see https://github.com/inejc/paragraph-vectors/issues/4).
+#### Parameters
+* **`data_file_name`**: str\
+Name of a file in the *data* directory that was used during training.
+* **`model_file_name`**: str\
+Name of a file in the *models* directory (a model trained on the **`data_file_name`** dataset).
 
 ### Example of trained vectors
 Todo.
+
+### Benchmarks
+Todo (see https://github.com/inejc/paragraph-vectors/issues/4).
 
 ### Resources
 * [1] [Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)

@@ -94,4 +94,6 @@ venv/
 env/
 
 # custom
+data/*.csv
+!data/example.csv
 models/*.pth.tar

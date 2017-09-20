@@ -11,6 +11,7 @@ omit =
     *tests*
     *train.py
     *data.py
+    *export_vectors.py
 
 [report]
 exclude_lines =

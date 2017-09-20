@@ -1,6 +1,6 @@
 import time
 from os import remove
-from os.path import join, dirname
+from os.path import join
 from sys import stdout, float_info
 
 import fire
@@ -10,11 +10,7 @@ from torch.optim import SGD
 from paragraphvec.data import load_dataset, NCEData
 from paragraphvec.loss import NegativeSampling
 from paragraphvec.models import DistributedMemory
-
-_MODELS_DIR = join(dirname(dirname(__file__)), 'models')
-_MODEL_NAME = ("{:s}_model.{:s}.{:s}_contextsize.{:d}_numnoisewords.{:d}"
-               "_vecdim.{:d}_batchsize.{:d}_lr.{:f}_epoch.{:d}_loss.{:f}"
-               ".pth.tar")
+from paragraphvec.utils import MODELS_DIR, MODEL_NAME
 
 
 def start(data_file_name,
@@ -155,7 +151,7 @@ def _run(data_file_name,
         is_best_loss = loss < best_loss
         best_loss = min(loss, best_loss)
 
-        model_file_name = _MODEL_NAME.format(
+        model_file_name = MODEL_NAME.format(
             data_file_name[:-4],
             model_ver,
             vec_combine_method,
@@ -166,7 +162,7 @@ def _run(data_file_name,
             lr,
             epoch_i + 1,
             loss)
-        model_file_path = join(_MODELS_DIR, model_file_name)
+        model_file_path = join(MODELS_DIR, model_file_name)
         state = {
             'epoch': epoch_i + 1,
             'model_state_dict': model.state_dict(),

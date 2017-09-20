@@ -2,19 +2,19 @@ import multiprocessing
 import re
 from math import ceil
 from os import cpu_count
-from os.path import join, dirname
+from os.path import join
 
 import torch
 from torchtext.data import Field, TabularDataset
 
-_DATA_DIR = join(dirname(dirname(__file__)), 'data')
+from paragraphvec.utils import DATA_DIR
 
 
 def load_dataset(file_name):
     """Loads contents from a file in the *data* directory into a
     torchtext.data.TabularDataset instance.
     """
-    file_path = join(_DATA_DIR, file_name)
+    file_path = join(DATA_DIR, file_name)
     text_field = Field(pad_token=None, tokenize=_tokenize_str)
 
     dataset = TabularDataset(
