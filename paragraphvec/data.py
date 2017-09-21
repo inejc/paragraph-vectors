@@ -4,7 +4,9 @@ from math import ceil
 from os import cpu_count
 from os.path import join
 
+import numpy as np
 import torch
+from numpy.random import choice
 from torchtext.data import Field, TabularDataset
 
 from paragraphvec.utils import DATA_DIR
@@ -167,7 +169,7 @@ class _NCEGenerator(object):
         self.num_noise_words = num_noise_words
 
         self._vocabulary = self.dataset.fields['text'].vocab
-        self._noise = torch.Tensor(len(self._vocabulary) - 1).zero_()
+        self._sample_noise = None
         self._init_noise_distribution()
         self._state = state
 
@@ -175,9 +177,16 @@ class _NCEGenerator(object):
         # we use a unigram distribution raised to the 3/4rd power,
         # as proposed by T. Mikolov et al. in Distributed Representations
         # of Words and Phrases and their Compositionality
+        probs = np.zeros(len(self._vocabulary) - 1)
+
         for word, freq in self._vocabulary.freqs.items():
-            self._noise[self._word_to_index(word)] = freq
-        self._noise.pow_(0.75)
+            probs[self._word_to_index(word)] = freq
+
+        probs = np.power(probs, 0.75)
+        probs /= np.sum(probs)
+
+        self._sample_noise = lambda: choice(
+            probs.shape[0], self.num_noise_words, p=probs).tolist()
 
     def __len__(self):
         num_examples = sum(self._num_examples_in_doc(d) for d in self.dataset)
@@ -237,10 +246,7 @@ class _NCEGenerator(object):
         batch.context_ids.append(current_context)
 
         # sample from the noise distribution
-        current_noise = torch.multinomial(
-            self._noise,
-            self.num_noise_words,
-            replacement=True).tolist()
+        current_noise = self._sample_noise()
         current_noise.insert(0, self._word_to_index(doc[in_doc_pos]))
         batch.target_noise_ids.append(current_noise)
 
