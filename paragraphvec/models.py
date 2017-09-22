@@ -59,3 +59,6 @@ class DistributedMemory(nn.Module):
         return torch.bmm(
             x.unsqueeze(1),
             self._O[:, target_noise_ids].permute(1, 0, 2)).squeeze()
+
+    def get_paragraph_vector(self, index):
+        return self._D[index, :].data.tolist()

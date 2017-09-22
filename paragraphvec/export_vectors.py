@@ -31,22 +31,24 @@ def start(data_file_name, model_file_name):
     def qm(str_): return '\"' + str_ + '\"'
 
     result_lines = []
+
     with open(join(DATA_DIR, data_file_name)) as file:
         lines = csv.reader(file)
         for i, line in enumerate(lines):
             result_line = [qm(x) if not x.isnumeric() else x for x in line[1:]]
-            result_line += [str(x) for x in model._D[i, :].data.tolist()]
+            result_line += [str(x) for x in model.get_paragraph_vector(i)]
             result_lines.append(','.join(result_line) + '\n')
 
     result_file_name = model_file_name[:-7] + 'csv'
+
     with open(join(DATA_DIR, result_file_name), 'w') as f:
         f.writelines(result_lines)
 
 
 def _load_model(model_file_name, num_docs, num_words):
     vec_dim = int(re.search('_vecdim\.(\d+)_', model_file_name).group(1))
-
     model_file_path = join(MODELS_DIR, model_file_name)
+
     try:
         checkpoint = torch.load(model_file_path)
     except AssertionError:

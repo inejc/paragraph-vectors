@@ -197,7 +197,7 @@ class _NCEGenerator(object):
 
     def next(self):
         """Updates state for the next process in a process-safe manner
-        and generates the current batch"""
+        and generates the current batch."""
         prev_doc_id, prev_in_doc_pos = self._state.update_state(
             self.dataset,
             self.batch_size,
