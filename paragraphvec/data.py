@@ -1,7 +1,8 @@
 import multiprocessing
+import os
 import re
+import signal
 from math import ceil
-from os import cpu_count
 from os.path import join
 
 import numpy as np
@@ -84,7 +85,7 @@ class NCEData(object):
                  num_noise_words, max_size, num_workers):
         self.max_size = max_size
 
-        self.num_workers = num_workers if num_workers != -1 else cpu_count()
+        self.num_workers = num_workers if num_workers != -1 else os.cpu_count()
         if self.num_workers is None:
             self.num_workers = 1
 
@@ -137,7 +138,8 @@ class NCEData(object):
 
         for process in self._processes:
             if process.is_alive():
-                process.terminate()
+                os.kill(process.pid, signal.SIGINT)
+                process.join()
 
         if self._queue is not None:
             self._queue.close()
