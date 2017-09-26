@@ -4,7 +4,7 @@
 
 A PyTorch implementation of Paragraph Vectors (doc2vec).
 
-All models minimize the Negative Sampling objective as proposed by T. Mikolov et al. [1]. This provides scope for sparse updates (i.e. only vectors of sampled noise words are used in forward and backward passes). In addition to that, batches of training data (with noise sampling) are generated in parallel on CPU while the model is trained on GPU.
+All models minimize the Negative Sampling objective as proposed by T. Mikolov et al. [1]. This provides scope for sparse updates (i.e. only vectors of sampled noise words are used in forward and backward passes). In addition to that, batches of training data (with noise sampling) are generated in parallel on a CPU while the model is trained on a GPU.
 
 **Caveat emptor!** Be warned that **`paragraph-vectors`** is in an early-stage development phase. Feedback, comments, suggestions, contributions, etc. are more than welcome.
 
@@ -46,7 +46,7 @@ Number of iterations to train the model (i.e. number of times every example is s
 * **`batch_size`**: int\
 Number of examples per single gradient update.
 * **`lr`**: float\
-Learning rate of the SGD optimizer (uses 0.9 nesterov momentum).
+Learning rate of the Adam optimizer.
 * **`model_ver`**: str, one of ('dm', 'dbow'), default='dm'\
 Version of the model as proposed by Q. V. Le et al. [5], Distributed Representations of Sentences and Documents. 'dm' stands for Distributed Memory, 'dbow' stands for Distributed Bag Of Words. Currently only the 'dm' version is implemented.
 * **`vec_combine_method`**: str, one of ('sum', 'concat'), default='sum'\

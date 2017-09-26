@@ -5,7 +5,7 @@ from sys import stdout, float_info
 
 import fire
 import torch
-from torch.optim import SGD
+from torch.optim import Adam
 
 from paragraphvec.data import load_dataset, NCEData
 from paragraphvec.loss import NegativeSampling
@@ -51,7 +51,7 @@ def start(data_file_name,
         Number of examples per single gradient update.
 
     lr: float
-        Learning rate of the SGD optimizer (uses 0.9 nesterov momentum).
+        Learning rate of the Adam optimizer.
 
     model_ver: str, one of ('dm', 'dbow'), default='dm'
         Version of the model as proposed by Q. V. Le et al., Distributed
@@ -117,7 +117,7 @@ def _run(data_file_name,
         num_words=vocabulary_size)
 
     cost_func = NegativeSampling()
-    optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, nesterov=True)
+    optimizer = Adam(params=model.parameters(), lr=lr)
 
     if torch.cuda.is_available():
         model.cuda()
