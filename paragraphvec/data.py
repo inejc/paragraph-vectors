@@ -212,7 +212,8 @@ class _NCEGenerator(object):
         while len(batch) < self.batch_size:
             if prev_doc_id == len(self.dataset):
                 # last document exhausted
-                return self._batch_to_torch_data(batch)
+                batch.torch_()
+                return batch
             if prev_in_doc_pos <= (len(self.dataset[prev_doc_id].text) - 1
                                    - self.context_size):
                 # more examples in the current document
@@ -223,7 +224,8 @@ class _NCEGenerator(object):
                 prev_doc_id += 1
                 prev_in_doc_pos = self.context_size
 
-        return self._batch_to_torch_data(batch)
+        batch.torch_()
+        return batch
 
     def _num_examples_in_doc(self, doc, in_doc_pos=None):
         if in_doc_pos is not None:
@@ -254,19 +256,6 @@ class _NCEGenerator(object):
 
     def _word_to_index(self, word):
         return self._vocabulary.stoi[word] - 1
-
-    @staticmethod
-    def _batch_to_torch_data(batch):
-        batch.context_ids = torch.LongTensor(batch.context_ids)
-        batch.doc_ids = torch.LongTensor(batch.doc_ids)
-        batch.target_noise_ids = torch.LongTensor(batch.target_noise_ids)
-
-        if torch.cuda.is_available():
-            batch.context_ids = batch.context_ids.cuda()
-            batch.doc_ids = batch.doc_ids.cuda()
-            batch.target_noise_ids = batch.target_noise_ids.cuda()
-
-        return batch
 
 
 class _NCEGeneratorState(object):
@@ -333,3 +322,13 @@ class _NCEBatch(object):
 
     def __len__(self):
         return len(self.doc_ids)
+
+    def torch_(self):
+        self.context_ids = torch.LongTensor(self.context_ids)
+        self.doc_ids = torch.LongTensor(self.doc_ids)
+        self.target_noise_ids = torch.LongTensor(self.target_noise_ids)
+
+    def cuda_(self):
+        self.context_ids = self.context_ids.cuda()
+        self.doc_ids = self.doc_ids.cuda()
+        self.target_noise_ids = self.target_noise_ids.cuda()
