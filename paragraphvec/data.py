@@ -161,7 +161,7 @@ class _NCEGenerator(object):
     state: paragraphvec.data._NCEGeneratorState
         Initial (indexing) state of the generator.
 
-    For other parameters see the class NCEBatchPool.
+    For other parameters see the NCEData class.
     """
     def __init__(self, dataset, batch_size, context_size,
                  num_noise_words, state):
