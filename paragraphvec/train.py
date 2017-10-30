@@ -1,7 +1,5 @@
 import time
-from os import remove
-from os.path import join
-from sys import stdout, float_info
+from sys import float_info, stdout
 
 import fire
 import torch
@@ -10,7 +8,7 @@ from torch.optim import Adam
 from paragraphvec.data import load_dataset, NCEData
 from paragraphvec.loss import NegativeSampling
 from paragraphvec.models import DistributedMemory
-from paragraphvec.utils import MODELS_DIR, MODEL_NAME
+from paragraphvec.utils import save_training_state
 
 
 def start(data_file_name,
@@ -23,6 +21,7 @@ def start(data_file_name,
           model_ver='dm',
           vec_combine_method='sum',
           save_all=False,
+          generate_plot=True,
           max_generated_batches=5,
           num_workers=1):
     """Trains a new model. The latest checkpoint and the best performing
@@ -67,6 +66,10 @@ def start(data_file_name,
         Indicates whether a checkpoint is saved after each epoch.
         If false, only the best performing model is saved.
 
+    generate_plot: bool, default=True
+        Indicates whether a diagnostic plot displaying loss value over
+        epochs is generated after each epoch.
+
     max_generated_batches: int, default=5
         Maximum number of pre-generated batches.
 
@@ -91,7 +94,7 @@ def start(data_file_name,
         _run(data_file_name, dataset, nce_data.get_generator(), len(nce_data),
              nce_data.vocabulary_size(), context_size, num_noise_words, vec_dim,
              num_epochs, batch_size, lr, model_ver, vec_combine_method,
-             save_all)
+             save_all, generate_plot)
     except KeyboardInterrupt:
         nce_data.stop()
 
@@ -109,7 +112,8 @@ def _run(data_file_name,
          lr,
          model_ver,
          vec_combine_method,
-         save_all):
+         save_all,
+         generate_plot):
 
     model = DistributedMemory(
         vec_dim,
@@ -127,7 +131,7 @@ def _run(data_file_name,
     print("Training started.")
 
     best_loss = float_info.max
-    prev_model_file_path = ""
+    prev_model_file_path = None
 
     for epoch_i in range(num_epochs):
         epoch_start_time = time.time()
@@ -151,8 +155,15 @@ def _run(data_file_name,
         is_best_loss = loss < best_loss
         best_loss = min(loss, best_loss)
 
-        model_file_name = MODEL_NAME.format(
-            data_file_name[:-4],
+        state = {
+            'epoch': epoch_i + 1,
+            'model_state_dict': model.state_dict(),
+            'best_loss': best_loss,
+            'optimizer_state_dict': optimizer.state_dict()
+        }
+
+        prev_model_file_path = save_training_state(
+            data_file_name,
             model_ver,
             vec_combine_method,
             context_size,
@@ -160,24 +171,13 @@ def _run(data_file_name,
             vec_dim,
             batch_size,
             lr,
-            epoch_i + 1,
-            loss)
-        model_file_path = join(MODELS_DIR, model_file_name)
-        state = {
-            'epoch': epoch_i + 1,
-            'model_state_dict': model.state_dict(),
-            'best_loss': best_loss,
-            'optimizer_state_dict': optimizer.state_dict()
-        }
-        if save_all:
-            torch.save(state, model_file_path)
-        elif is_best_loss:
-            try:
-                remove(prev_model_file_path)
-            except FileNotFoundError:
-                pass
-            torch.save(state, model_file_path)
-            prev_model_file_path = model_file_path
+            epoch_i,
+            loss,
+            state,
+            save_all,
+            generate_plot,
+            is_best_loss,
+            prev_model_file_path)
 
         epoch_total_time = round(time.time() - epoch_start_time)
         print(" ({:d}s) - loss: {:.4f}".format(epoch_total_time, loss))
