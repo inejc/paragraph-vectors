@@ -96,4 +96,6 @@ env/
 # custom
 data/*.csv
 !data/example.csv
+diagnostics/*.csv
+diagnostics/*.png
 models/*.pth.tar

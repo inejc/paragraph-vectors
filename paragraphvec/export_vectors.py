@@ -32,8 +32,8 @@ def start(data_file_name, model_file_name):
 
     result_lines = []
 
-    with open(join(DATA_DIR, data_file_name)) as file:
-        lines = csv.reader(file)
+    with open(join(DATA_DIR, data_file_name)) as f:
+        lines = csv.reader(f)
         for i, line in enumerate(lines):
             result_line = [qm(x) if not x.isnumeric() else x for x in line[1:]]
             result_line += [str(x) for x in model.get_paragraph_vector(i)]

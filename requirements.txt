@@ -1,9 +1,15 @@
 certifi==2017.7.27.1
 chardet==3.0.4
+cycler==0.10.0
 fire==0.1.2
 idna==2.6
+matplotlib==2.1.0
 numpy==1.13.1
+py==1.4.34
+pyparsing==2.2.0
 pytest==3.2.3
+python-dateutil==2.6.1
+pytz==2017.2
 PyYAML==3.12
 requests==2.18.4
 six==1.10.0

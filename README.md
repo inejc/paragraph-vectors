@@ -53,6 +53,8 @@ Version of the model as proposed by Q. V. Le et al. [5], Distributed Representat
 Method for combining paragraph and word vectors in the 'dm' model. Currently only the 'sum' operation is implemented.
 * **`save_all`**: bool, default=False\
 Indicates whether a checkpoint is saved after each epoch. If false, only the best performing model is saved.
+* **`generate_plot`**: bool, default=True\
+Indicates whether a diagnostic plot displaying loss value over epochs is generated after each epoch.
 * **`max_generated_batches`**: int, default=5\
 Maximum number of pre-generated batches.
 * **`num_workers`**: int, default=1\
