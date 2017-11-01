@@ -139,11 +139,15 @@ def _run(data_file_name,
 
         for batch_i in range(num_batches):
             batch = next(data_generator)
+            if torch.cuda.is_available():
+                batch.cuda_()
+
             x = model.forward(
                 batch.context_ids,
                 batch.doc_ids,
                 batch.target_noise_ids)
             x = cost_func.forward(x)
+
             loss.append(x.data[0])
             model.zero_grad()
             x.backward()
