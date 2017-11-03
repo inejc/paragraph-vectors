@@ -1,6 +1,8 @@
 ## Paragraph Vectors
 [![Build Status](https://travis-ci.org/inejc/paragraph-vectors.svg?branch=master)](https://travis-ci.org/inejc/paragraph-vectors)
 [![codecov](https://codecov.io/gh/inejc/paragraph-vectors/branch/master/graph/badge.svg)](https://codecov.io/gh/inejc/paragraph-vectors)
+[![codebeat badge](https://codebeat.co/badges/e5008ad0-240c-48e9-a158-2547989b798e)](https://codebeat.co/projects/github-com-inejc-paragraph-vectors-master)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c865067aa4194184ae0c649b865b1fd2)](https://www.codacy.com/app/inejc/paragraph-vectors?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=inejc/paragraph-vectors&amp;utm_campaign=Badge_Grade)
 
 A PyTorch implementation of Paragraph Vectors (doc2vec).
 <p align="center">
@@ -73,12 +75,6 @@ python export_vectors.py start --data_file_name 'example.csv' --model_file_name 
 Name of a file in the *data* directory that was used during training.
 * **`model_file_name`**: str\
 Name of a file in the *models* directory (a model trained on the **`data_file_name`** dataset).
-
-### Example of trained vectors
-Todo.
-
-### Benchmarks
-Todo (see https://github.com/inejc/paragraph-vectors/issues/4).
 
 ### Resources
 * [1] [Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)
