@@ -76,6 +76,12 @@ Name of a file in the *data* directory that was used during training.
 * **`model_file_name`**: str\
 Name of a file in the *models* directory (a model trained on the **`data_file_name`** dataset).
 
+### Example of trained vectors
+First two principal components (1% cumulative variance explained) of 300-dimensional document vectors trained on arXiv abstracts. Shown are two subcategories from Computer Science. Dataset was comprised of 74219 documents and 91417 unique words.
+<p align="center">
+    <img src="/.github/learned_vectors_pca.png?raw=true"/>
+</p>
+
 ### Resources
 * [1] [Distributed Representations of Words and Phrases and their Compositionality, T. Mikolov et al.](https://arxiv.org/abs/1310.4546)
 * [2] [Learning word embeddings efficiently with noise-contrastive estimation, A. Mnih et al.](http://papers.nips.cc/paper/5165-learning-word-embeddings-efficiently-with)
