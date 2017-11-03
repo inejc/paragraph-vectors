@@ -3,6 +3,9 @@
 [![codecov](https://codecov.io/gh/inejc/paragraph-vectors/branch/master/graph/badge.svg)](https://codecov.io/gh/inejc/paragraph-vectors)
 
 A PyTorch implementation of Paragraph Vectors (doc2vec).
+<p align="center">
+    <img src="/.github/dmdbow.png?raw=true"/>
+</p>
 
 All models minimize the Negative Sampling objective as proposed by T. Mikolov et al. [1]. This provides scope for sparse updates (i.e. only vectors of sampled noise words are used in forward and backward passes). In addition to that, batches of training data (with noise sampling) are generated in parallel on a CPU while the model is trained on a GPU.
 
