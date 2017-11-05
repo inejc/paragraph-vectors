@@ -23,7 +23,8 @@ def load_dataset(file_name):
     dataset = TabularDataset(
         path=file_path,
         format='csv',
-        fields=[('text', text_field)])
+        fields=[('text', text_field)],
+        skip_header=True)
 
     text_field.build_vocab(dataset)
     return dataset

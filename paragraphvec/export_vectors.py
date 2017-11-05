@@ -23,30 +23,38 @@ def start(data_file_name, model_file_name):
         the *data_file_name* dataset).
     """
     dataset = load_dataset(data_file_name)
+    vec_dim = int(re.search('_vecdim\.(\d+)_', model_file_name).group(1))
     model = _load_model(
         model_file_name,
+        vec_dim,
         num_docs=len(dataset),
         num_words=len(dataset.fields['text'].vocab) - 1)
-
-    def qm(str_): return '\"' + str_ + '\"'
 
     result_lines = []
 
     with open(join(DATA_DIR, data_file_name)) as f:
-        lines = csv.reader(f)
-        for i, line in enumerate(lines):
-            result_line = [qm(x) if not x.isnumeric() else x for x in line[1:]]
-            result_line += [str(x) for x in model.get_paragraph_vector(i)]
-            result_lines.append(','.join(result_line) + '\n')
+        reader = csv.reader(f)
+
+        for i, line in enumerate(reader):
+            # skip text
+            result_line = line[1:]
+            if i == 0:
+                # header line
+                result_line += ["d{:d}".format(x) for x in range(vec_dim)]
+            else:
+                vector = model.get_paragraph_vector(i - 1)
+                result_line += [str(x) for x in vector]
+
+            result_lines.append(result_line)
 
     result_file_name = model_file_name[:-7] + 'csv'
 
     with open(join(DATA_DIR, result_file_name), 'w') as f:
-        f.writelines(result_lines)
+        writer = csv.writer(f)
+        writer.writerows(result_lines)
 
 
-def _load_model(model_file_name, num_docs, num_words):
-    vec_dim = int(re.search('_vecdim\.(\d+)_', model_file_name).group(1))
+def _load_model(model_file_name, vec_dim, num_docs, num_words):
     model_file_path = join(MODELS_DIR, model_file_name)
 
     try:

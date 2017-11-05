@@ -9,9 +9,6 @@ source =
 
 omit =
     *tests*
-    *train.py
-    *export_vectors.py
-    *utils.py
 
 [report]
 exclude_lines =
