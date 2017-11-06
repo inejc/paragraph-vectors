@@ -208,7 +208,7 @@ class _NCEGenerator(object):
             self._num_examples_in_doc)
 
         # generate the actual batch
-        batch = _NCEBatch()
+        batch = _NCEBatch(self.context_size)
 
         while len(batch) < self.batch_size:
             if prev_doc_id == len(self.dataset):
@@ -244,11 +244,15 @@ class _NCEGenerator(object):
         doc = self.dataset[doc_id].text
         batch.doc_ids.append(doc_id)
 
-        current_context = []
-        for i in range(-self.context_size, self.context_size + 1):
-            if i != 0:
-                current_context.append(self._word_to_index(doc[in_doc_pos - i]))
-        batch.context_ids.append(current_context)
+        if self.context_size > 0:
+            current_context = []
+            for i in range(-self.context_size, self.context_size + 1):
+                if i == 0:
+                    # skip the target word
+                    continue
+                context_id = self._word_to_index(doc[in_doc_pos - i])
+                current_context.append(context_id)
+            batch.context_ids.append(current_context)
 
         # sample from the noise distribution
         current_noise = self._sample_noise()
@@ -316,8 +320,8 @@ class _NCEGeneratorState(object):
 
 
 class _NCEBatch(object):
-    def __init__(self):
-        self.context_ids = []
+    def __init__(self, context_size):
+        self.context_ids = [] if context_size > 0 else None
         self.doc_ids = []
         self.target_noise_ids = []
 
@@ -325,11 +329,13 @@ class _NCEBatch(object):
         return len(self.doc_ids)
 
     def torch_(self):
-        self.context_ids = torch.LongTensor(self.context_ids)
+        if self.context_ids is not None:
+            self.context_ids = torch.LongTensor(self.context_ids)
         self.doc_ids = torch.LongTensor(self.doc_ids)
         self.target_noise_ids = torch.LongTensor(self.target_noise_ids)
 
     def cuda_(self):
-        self.context_ids = self.context_ids.cuda()
+        if self.context_ids is not None:
+            self.context_ids = self.context_ids.cuda()
         self.doc_ids = self.doc_ids.cuda()
         self.target_noise_ids = self.target_noise_ids.cuda()

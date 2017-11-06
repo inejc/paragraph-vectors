@@ -155,6 +155,21 @@ class NCEDataTest(TestCase):
             state_parallel._in_doc_pos.value,
             state_serial._in_doc_pos.value)
 
+    def test_no_context(self):
+        nce_data = NCEData(
+            self.dataset,
+            batch_size=16,
+            context_size=0,
+            num_noise_words=3,
+            max_size=1,
+            num_workers=1)
+        nce_data.start()
+        nce_generator = nce_data.get_generator()
+        batch = next(nce_generator)
+        nce_data.stop()
+
+        self.assertEqual(batch.context_ids, None)
+
 
 class DataUtilsTest(TestCase):
 

@@ -64,7 +64,7 @@ Indicates whether a diagnostic plot displaying loss value over epochs is generat
 * **`max_generated_batches`**: int, default=5\
 Maximum number of pre-generated batches.
 * **`num_workers`**: int, default=1\
-Number of batch generator jobs to run in parallel. If value is set to -1, total number of machine CPUs is used. Note that order of batches is currently not guaranteed when **`num_workers`** > 1.
+Number of batch generator jobs to run in parallel. If value is set to -1, total number of machine CPUs is used. Note that order of batches is not guaranteed when **`num_workers`** > 1.
 
 3. Export trained paragraph vectors to a csv file (vectors are saved in the [data](data) directory).
 ```bash
