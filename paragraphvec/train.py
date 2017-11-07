@@ -7,18 +7,18 @@ from torch.optim import Adam
 
 from paragraphvec.data import load_dataset, NCEData
 from paragraphvec.loss import NegativeSampling
-from paragraphvec.models import DM
+from paragraphvec.models import DM, DBOW
 from paragraphvec.utils import save_training_state
 
 
 def start(data_file_name,
-          context_size,
           num_noise_words,
           vec_dim,
           num_epochs,
           batch_size,
           lr,
-          model_ver='dm',
+          model_ver='dbow',
+          context_size=0,
           vec_combine_method='sum',
           save_all=False,
           generate_plot=True,
@@ -32,9 +32,20 @@ def start(data_file_name,
     data_file_name: str
         Name of a file in the *data* directory.
 
-    context_size: int
-        Half the size of a neighbourhood of target words (i.e. how many
-        words left and right are regarded as context).
+    model_ver: str, one of ('dm', 'dbow'), default='dbow'
+        Version of the model as proposed by Q. V. Le et al., Distributed
+        Representations of Sentences and Documents. 'dbow' stands for
+        Distributed Bag Of Words, 'dm' stands for Distributed Memory.
+
+    vec_combine_method: str, one of ('sum', 'concat'), default='sum'
+        Method for combining paragraph and word vectors when model_ver='dm'.
+        Currently only the 'sum' operation is implemented.
+
+    context_size: int, default=0
+        Half the size of a neighbourhood of target words when model_ver='dm'
+        (i.e. how many words left and right are regarded as context). When
+        model_ver='dm' context_size has to greater than 0, when
+        model_ver='dbow' context_size has to be 0.
 
     num_noise_words: int
         Number of noise words to sample from the noise distribution.
@@ -52,16 +63,6 @@ def start(data_file_name,
     lr: float
         Learning rate of the Adam optimizer.
 
-    model_ver: str, one of ('dm', 'dbow'), default='dm'
-        Version of the model as proposed by Q. V. Le et al., Distributed
-        Representations of Sentences and Documents. 'dm' stands for
-        Distributed Memory, 'dbow' stands for Distributed Bag Of Words.
-        Currently only the 'dm' version is implemented.
-
-    vec_combine_method: str, one of ('sum', 'concat'), default='sum'
-        Method for combining paragraph and word vectors in the 'dm' model.
-        Currently only the 'sum' operation is implemented.
-
     save_all: bool, default=False
         Indicates whether a checkpoint is saved after each epoch.
         If false, only the best performing model is saved.
@@ -78,7 +79,17 @@ def start(data_file_name,
         to -1 number of machine cores are used.
     """
     assert model_ver in ('dm', 'dbow')
-    assert vec_combine_method in ('sum', 'concat')
+
+    model_ver_is_dbow = model_ver == 'dbow'
+
+    if model_ver_is_dbow:
+        assert context_size == 0, "Context size has to be zero when using dbow"
+    else:
+        assert vec_combine_method in ('sum', 'concat'), ("Invalid method for"
+                                                         " combining paragraph "
+                                                         "and word vectors when"
+                                                         " using dm")
+        assert context_size > 0, "Context size must not be zero when using dm"
 
     dataset = load_dataset(data_file_name)
     nce_data = NCEData(
@@ -94,7 +105,7 @@ def start(data_file_name,
         _run(data_file_name, dataset, nce_data.get_generator(), len(nce_data),
              nce_data.vocabulary_size(), context_size, num_noise_words, vec_dim,
              num_epochs, batch_size, lr, model_ver, vec_combine_method,
-             save_all, generate_plot)
+             save_all, generate_plot, model_ver_is_dbow)
     except KeyboardInterrupt:
         nce_data.stop()
 
@@ -113,12 +124,13 @@ def _run(data_file_name,
          model_ver,
          vec_combine_method,
          save_all,
-         generate_plot):
+         generate_plot,
+         model_ver_is_dbow):
 
-    model = DM(
-        vec_dim,
-        num_docs=len(dataset),
-        num_words=vocabulary_size)
+    if model_ver_is_dbow:
+        model = DBOW(vec_dim, num_docs=len(dataset), num_words=vocabulary_size)
+    else:
+        model = DM(vec_dim, num_docs=len(dataset), num_words=vocabulary_size)
 
     cost_func = NegativeSampling()
     optimizer = Adam(params=model.parameters(), lr=lr)
@@ -142,10 +154,14 @@ def _run(data_file_name,
             if torch.cuda.is_available():
                 batch.cuda_()
 
-            x = model.forward(
-                batch.context_ids,
-                batch.doc_ids,
-                batch.target_noise_ids)
+            if model_ver_is_dbow:
+                x = model.forward(batch.doc_ids, batch.target_noise_ids)
+            else:
+                x = model.forward(
+                    batch.context_ids,
+                    batch.doc_ids,
+                    batch.target_noise_ids)
+
             x = cost_func.forward(x)
 
             loss.append(x.data[0])
@@ -181,7 +197,8 @@ def _run(data_file_name,
             save_all,
             generate_plot,
             is_best_loss,
-            prev_model_file_path)
+            prev_model_file_path,
+            model_ver_is_dbow)
 
         epoch_total_time = round(time.time() - epoch_start_time)
         print(" ({:d}s) - loss: {:.4f}".format(epoch_total_time, loss))
