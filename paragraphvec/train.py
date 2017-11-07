@@ -7,7 +7,7 @@ from torch.optim import Adam
 
 from paragraphvec.data import load_dataset, NCEData
 from paragraphvec.loss import NegativeSampling
-from paragraphvec.models import DistributedMemory
+from paragraphvec.models import DM
 from paragraphvec.utils import save_training_state
 
 
@@ -115,7 +115,7 @@ def _run(data_file_name,
          save_all,
          generate_plot):
 
-    model = DistributedMemory(
+    model = DM(
         vec_dim,
         num_docs=len(dataset),
         num_words=vocabulary_size)

@@ -6,7 +6,7 @@ import fire
 import torch
 
 from paragraphvec.data import load_dataset
-from paragraphvec.models import DistributedMemory
+from paragraphvec.models import DM
 from paragraphvec.utils import DATA_DIR, MODELS_DIR
 
 
@@ -64,7 +64,7 @@ def _load_model(model_file_name, vec_dim, num_docs, num_words):
             model_file_path,
             map_location=lambda storage, location: storage)
 
-    model = DistributedMemory(vec_dim, num_docs, num_words)
+    model = DM(vec_dim, num_docs, num_words)
     model.load_state_dict(checkpoint['model_state_dict'])
     return model
 
