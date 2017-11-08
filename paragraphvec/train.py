@@ -78,7 +78,7 @@ def start(data_file_name,
         Number of batch generator jobs to run in parallel. If value is set
         to -1 number of machine cores are used.
     """
-    assert model_ver in ('dm', 'dbow')
+    assert model_ver in ('dm', 'dbow'), "Invalid version of the model"
 
     model_ver_is_dbow = model_ver == 'dbow'
 

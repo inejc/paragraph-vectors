@@ -6,7 +6,7 @@ import fire
 import torch
 
 from paragraphvec.data import load_dataset
-from paragraphvec.models import DM
+from paragraphvec.models import DM, DBOW
 from paragraphvec.utils import DATA_DIR, MODELS_DIR
 
 
@@ -23,9 +23,17 @@ def start(data_file_name, model_file_name):
         the *data_file_name* dataset).
     """
     dataset = load_dataset(data_file_name)
+
+    model_ver = re.search('_model\.(dm|dbow)', model_file_name).group(1)
+    assert model_ver is not None, ("Model file name contains an invalid"
+                                   " version of the model")
+    model_ver_is_dbow = model_ver == 'dbow'
+
     vec_dim = int(re.search('_vecdim\.(\d+)_', model_file_name).group(1))
+
     model = _load_model(
         model_file_name,
+        model_ver_is_dbow,
         vec_dim,
         num_docs=len(dataset),
         num_words=len(dataset.fields['text'].vocab) - 1)
@@ -54,7 +62,8 @@ def start(data_file_name, model_file_name):
         writer.writerows(result_lines)
 
 
-def _load_model(model_file_name, vec_dim, num_docs, num_words):
+def _load_model(model_file_name, model_ver_is_dbow,
+                vec_dim, num_docs, num_words):
     model_file_path = join(MODELS_DIR, model_file_name)
 
     try:
@@ -64,7 +73,11 @@ def _load_model(model_file_name, vec_dim, num_docs, num_words):
             model_file_path,
             map_location=lambda storage, location: storage)
 
-    model = DM(vec_dim, num_docs, num_words)
+    if model_ver_is_dbow:
+        model = DBOW(vec_dim, num_docs, num_words)
+    else:
+        model = DM(vec_dim, num_docs, num_words)
+
     model.load_state_dict(checkpoint['model_state_dict'])
     return model
 
