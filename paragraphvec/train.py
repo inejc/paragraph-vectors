@@ -78,18 +78,19 @@ def start(data_file_name,
         Number of batch generator jobs to run in parallel. If value is set
         to -1 number of machine cores are used.
     """
-    assert model_ver in ('dm', 'dbow'), "Invalid version of the model"
+    if model_ver not in ('dm', 'dbow'):
+        raise ValueError("Invalid version of the model")
 
     model_ver_is_dbow = model_ver == 'dbow'
 
-    if model_ver_is_dbow:
-        assert context_size == 0, "Context size has to be zero when using dbow"
-    else:
-        assert vec_combine_method in ('sum', 'concat'), ("Invalid method for"
-                                                         " combining paragraph "
-                                                         "and word vectors when"
-                                                         " using dm")
-        assert context_size > 0, "Context size must not be zero when using dm"
+    if model_ver_is_dbow and context_size != 0:
+        raise ValueError("Context size has to be zero when using dbow")
+    if not model_ver_is_dbow:
+        if vec_combine_method not in ('sum', 'concat'):
+            raise ValueError("Invalid method for combining paragraph and word "
+                             "vectors when using dm")
+        if context_size <= 0:
+            raise ValueError("Context size must be positive when using dm")
 
     dataset = load_dataset(data_file_name)
     nce_data = NCEData(

@@ -25,10 +25,11 @@ def start(data_file_name, model_file_name):
     dataset = load_dataset(data_file_name)
 
     model_ver = re.search('_model\.(dm|dbow)', model_file_name).group(1)
-    assert model_ver is not None, ("Model file name contains an invalid"
-                                   " version of the model")
-    model_ver_is_dbow = model_ver == 'dbow'
+    if model_ver is None:
+        raise ValueError("Model file name contains an invalid"
+                         "version of the model")
 
+    model_ver_is_dbow = model_ver == 'dbow'
     vec_dim = int(re.search('_vecdim\.(\d+)_', model_file_name).group(1))
 
     model = _load_model(
