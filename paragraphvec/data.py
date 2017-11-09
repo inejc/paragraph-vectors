@@ -244,20 +244,23 @@ class _NCEGenerator(object):
         doc = self.dataset[doc_id].text
         batch.doc_ids.append(doc_id)
 
-        if self.context_size > 0:
-            current_context = []
-            for i in range(-self.context_size, self.context_size + 1):
-                if i == 0:
-                    # skip the target word
-                    continue
-                context_id = self._word_to_index(doc[in_doc_pos - i])
-                current_context.append(context_id)
-            batch.context_ids.append(current_context)
-
         # sample from the noise distribution
         current_noise = self._sample_noise()
         current_noise.insert(0, self._word_to_index(doc[in_doc_pos]))
         batch.target_noise_ids.append(current_noise)
+
+        if self.context_size == 0:
+            return
+
+        current_context = []
+        context_indices = (in_doc_pos + diff for diff in
+                           range(-self.context_size, self.context_size + 1)
+                           if diff != 0)
+
+        for i in context_indices:
+            context_id = self._word_to_index(doc[i])
+            current_context.append(context_id)
+        batch.context_ids.append(current_context)
 
     def _word_to_index(self, word):
         return self._vocabulary.stoi[word] - 1
