@@ -35,14 +35,18 @@ text,...
 ```
 2. Run [train.py](paragraphvec/train.py) with selected parameters (models are saved in the [models](models) directory).
 ```bash
-python train.py start --data_file_name 'example.csv' --num_epochs 100 --batch_size 32 --context_size 4 --num_noise_words 5 --vec_dim 150 --lr 1e-4
+python train.py start --data_file_name 'example.csv' --num_epochs 100 --batch_size 32 --num_noise_words 2 --vec_dim 100 --lr 1e-3
 ```
 
 #### Parameters
 * **`data_file_name`**: str\
 Name of a file in the *data* directory.
-* **`context_size`**: int\
-Half the size of a neighbourhood of target words (i.e. how many words left and right are regarded as context).
+* **`model_ver`**: str, one of ('dm', 'dbow'), default='dbow'\
+Version of the model as proposed by Q. V. Le et al. [5], Distributed Representations of Sentences and Documents. 'dbow' stands for Distributed Bag Of Words, 'dm' stands for Distributed Memory.
+* **`vec_combine_method`**: str, one of ('sum', 'concat'), default='sum'\
+Method for combining paragraph and word vectors when model_ver='dm'. Currently only the 'sum' operation is implemented.
+* **`context_size`**: int, default=0\
+Half the size of a neighbourhood of target words when model_ver='dm' (i.e. how many words left and right are regarded as context). When model_ver='dm' context_size has to greater than 0, when model_ver='dbow' context_size has to be 0.
 * **`num_noise_words`**: int\
 Number of noise words to sample from the noise distribution.
 * **`vec_dim`**: int\
@@ -53,10 +57,6 @@ Number of iterations to train the model (i.e. number of times every example is s
 Number of examples per single gradient update.
 * **`lr`**: float\
 Learning rate of the Adam optimizer.
-* **`model_ver`**: str, one of ('dm', 'dbow'), default='dm'\
-Version of the model as proposed by Q. V. Le et al. [5], Distributed Representations of Sentences and Documents. 'dm' stands for Distributed Memory, 'dbow' stands for Distributed Bag Of Words. Currently only the 'dm' version is implemented.
-* **`vec_combine_method`**: str, one of ('sum', 'concat'), default='sum'\
-Method for combining paragraph and word vectors in the 'dm' model. Currently only the 'sum' operation is implemented.
 * **`save_all`**: bool, default=False\
 Indicates whether a checkpoint is saved after each epoch. If false, only the best performing model is saved.
 * **`generate_plot`**: bool, default=True\
@@ -64,11 +64,11 @@ Indicates whether a diagnostic plot displaying loss value over epochs is generat
 * **`max_generated_batches`**: int, default=5\
 Maximum number of pre-generated batches.
 * **`num_workers`**: int, default=1\
-Number of batch generator jobs to run in parallel. If value is set to -1, total number of machine CPUs is used. Note that order of batches is currently not guaranteed when **`num_workers`** > 1.
+Number of batch generator jobs to run in parallel. If value is set to -1, total number of machine CPUs is used. Note that order of batches is not guaranteed when **`num_workers`** > 1.
 
 3. Export trained paragraph vectors to a csv file (vectors are saved in the [data](data) directory).
 ```bash
-python export_vectors.py start --data_file_name 'example.csv' --model_file_name 'example_model.dm.sum_contextsize.5_numnoisewords.50_vecdim.300_batchsize.32_lr.0.010000_epoch.791_loss.0.057607.pth.tar'
+python export_vectors.py start --data_file_name 'example.csv' --model_file_name 'example_model.dbow_numnoisewords.2_vecdim.100_batchsize.32_lr.0.001000_epoch.25_loss.0.981524.pth.tar'
 ```
 
 #### Parameters
