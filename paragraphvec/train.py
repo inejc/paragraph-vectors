@@ -143,7 +143,7 @@ def _run(data_file_name,
     print("Vocabulary size is {:d}.\n".format(vocabulary_size))
     print("Training started.")
 
-    best_loss = float_info.max
+    best_loss = float("inf")
     prev_model_file_path = None
 
     for epoch_i in range(num_epochs):
@@ -165,7 +165,7 @@ def _run(data_file_name,
 
             x = cost_func.forward(x)
 
-            loss.append(x.data[0])
+            loss.append(x.item())
             model.zero_grad()
             x.backward()
             optimizer.step()
