@@ -15,4 +15,4 @@ requests==2.18.4
 six==1.10.0
 torchtext==0.2.0
 tqdm==4.15.0
-urllib3==1.22
+urllib3==1.24.2
