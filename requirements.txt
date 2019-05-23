@@ -11,7 +11,7 @@ pytest==3.2.3
 python-dateutil==2.6.1
 pytz==2017.2
 PyYAML==3.12
-requests==2.18.4
+requests==2.20.0
 six==1.10.0
 torchtext==0.2.0
 tqdm==4.15.0
