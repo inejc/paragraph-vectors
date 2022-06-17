@@ -4,7 +4,7 @@ cycler==0.10.0
 fire==0.1.2
 idna==2.6
 matplotlib==2.1.0
-numpy==1.13.1
+numpy==1.21.0
 py==1.4.34
 pyparsing==2.2.0
 pytest==3.2.3
